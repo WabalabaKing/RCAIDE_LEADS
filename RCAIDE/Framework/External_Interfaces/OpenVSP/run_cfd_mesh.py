@@ -26,7 +26,10 @@ def run_vsp_mesh(geom,vsp_file, minedge,maxedge, sym=False,
         if geom_type in ["Wing"]:
             geom_name = vsp.GetGeomName(geom_id)
             print(f"Processing {geom_name} ({geom_type})")
-
+            subsurf_ids = vsp.GetSubSurfIDVec(geom_id)
+            for subsurf_id in subsurf_ids:
+                vsp.DeleteSubSurf(geom_id, subsurf_id)
+                print(f"   Deleted subsurface {subsurf_id}")
             # Get number of sections
             xsecsurf_id = vsp.GetXSecSurf(geom_id, 0)
             num_sections = vsp.GetNumXSec(xsecsurf_id)
@@ -68,28 +71,27 @@ def run_vsp_mesh(geom,vsp_file, minedge,maxedge, sym=False,
 
         #    print(f"  Applied TE closure settings to all {num_sections} sections.")
 
-
-    
     vsp.Update()
     print("Trailing edge settings updated for all wings and bodies of revolution.")
     if source==True:
         set_sources(geom)
-    
+    vehicle_cont = vsp.FindContainer('Vehicle',0)
+    STL_multi    = vsp.FindParm(vehicle_cont, 'MultiSolid', 'STLSettings')
+    vsp.SetParmVal(STL_multi, 1.0)
     vsp.SetCFDMeshVal(vsp.CFD_MIN_EDGE_LEN, minedge )
     vsp.SetCFDMeshVal( vsp.CFD_MAX_EDGE_LEN, maxedge)
     vsp.SetCFDMeshVal( vsp.CFD_GROWTH_RATIO , 1.2 )
+    vsp.SetCFDMeshVal(vsp.CFD_MAX_GAP, maxedge*0.01 )
+    
     vsp.SetCFDMeshVal( vsp.CFD_HALF_MESH_FLAG , sym)
     vsp.SetCFDMeshVal( vsp.CFD_FAR_FIELD_FLAG  , farfield)
     if farfield:
         vsp.SetCFDMeshVal( vsp.CFD_FAR_MAX_EDGE_LEN , farfield_scale*maxedge*5)
         vsp.SetCFDMeshVal( vsp.CFD_FAR_X_SCALE  , farfield_scale)
         vsp.SetCFDMeshVal( vsp.CFD_FAR_Y_SCALE  , farfield_scale)
-        vsp.SetCFDMeshVal( vsp.CFD_FAR_Z_SCALE  , 2*farfield_scale)
-    #vsp.AddDefaultSources()    
+        vsp.SetCFDMeshVal( vsp.CFD_FAR_Z_SCALE  , 2*farfield_scale)  
     vsp.SetCFDMeshVal( vsp.CFD_INTERSECT_SUBSURFACE_FLAG , False)
     vsp.SetComputationFileName(vsp.CFD_STL_FILE_NAME ,vsp_file)
     vsp.Update()
-    
-    vsp.WriteVSPFile(vsp_file + '_premesh.vsp3')
     vsp.ComputeCFDMesh(vsp.SET_ALL,vsp.SET_NONE,vsp.CFD_STL_TYPE)
     
