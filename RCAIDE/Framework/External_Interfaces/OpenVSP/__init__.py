@@ -19,3 +19,5 @@ from .vsp_nacelle              import *
 from .vsp_wing                 import *
 from .vsp_rotor                import *
 from .write_vsp_mesh           import write_vsp_mesh
+from .run_cfd_mesh             import run_vsp_mesh
+from .STL_Gmesh				   import stl_to_su2
