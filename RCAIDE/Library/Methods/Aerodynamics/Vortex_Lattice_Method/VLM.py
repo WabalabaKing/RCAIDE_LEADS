@@ -1,4 +1,3 @@
-
 # VLM.py
 # 
 # Created:  Oct 2020, E. Botero
@@ -20,7 +19,6 @@ from copy import  deepcopy
 # ----------------------------------------------------------------------
 #  Vortex Lattice
 # ----------------------------------------------------------------------
-
 def VLM(conditions,settings,geometry):
     """Uses the vortex lattice method to compute the lift, induced drag and moment coefficients.
     
