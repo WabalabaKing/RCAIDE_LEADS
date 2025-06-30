@@ -12,7 +12,10 @@ from RCAIDE.Framework.Analyses                         import Process
 from RCAIDE.Library.Methods.Aerodynamics               import Common
 from .Aerodynamics                                     import Aerodynamics 
 from RCAIDE.Framework.Analyses.Common.Process_Geometry import Process_Geometry 
-from RCAIDE.Library.Methods.Aerodynamics.SU2           import *   
+from RCAIDE.Library.Methods.Aerodynamics.SU2           import *
+from RCAIDE.Framework.External_Interfaces.OpenVSP.write_vsp_mesh import write_vsp_mesh 
+from RCAIDE.Framework.External_Interfaces.GMSH.mesh_geo_file     import mesh_geo_file   
+from RCAIDE.Framework.External_Interfaces.GMSH.write_geo_file    import write_geo_file
 
 # package imports 
 import numpy as np 
@@ -114,9 +117,9 @@ class SU2_Euler(Aerodynamics):
         
 
     def initialize(self): 
-        write_vsp_mesh(self)
-        write_geo_file(self)
-        mesh_geo_file(self)
+        write_vsp_mesh(self) # CHECK 
+        write_geo_file(self) # CHECK 
+        mesh_geo_file(self)  # CHECK 
         
         # sample training data
         train_SU2_surrogates(self)
