@@ -45,7 +45,7 @@ def run_vsp_mesh(geom,vsp_file, minedge,maxedge, sym=False,
                 vsp.SetParmVal(te_absrel, 0)
                 # TE thickness
                 te_thick = vsp.GetParm(geom_id, "TE_Close_Thick", group)
-                vsp.SetParmVal(te_thick, 0.01)
+                vsp.SetParmVal(te_thick, minedge/5)
             print(f"  Applied TE closure settings to all {num_sections} sections.")
         # if geom_type in ["BodyOfRevolution"]:
         #     geom_name = vsp.GetGeomName(geom_id)

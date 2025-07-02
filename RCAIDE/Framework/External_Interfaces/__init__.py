@@ -10,3 +10,4 @@
  
 from . import OpenVSP
 from . import GMSH
+from . import SU2
