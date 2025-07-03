@@ -13,9 +13,11 @@ from RCAIDE.Library.Methods.Aerodynamics               import Common
 from .Aerodynamics                                     import Aerodynamics 
 from RCAIDE.Framework.Analyses.Common.Process_Geometry import Process_Geometry 
 from RCAIDE.Library.Methods.Aerodynamics.SU2           import *
-from RCAIDE.Framework.External_Interfaces.OpenVSP.write_vsp_mesh import write_vsp_mesh 
-from RCAIDE.Framework.External_Interfaces.GMSH.mesh_geo_file     import mesh_geo_file   
-from RCAIDE.Framework.External_Interfaces.GMSH.write_geo_file    import write_geo_file
+
+
+from RCAIDE.Framework.External_Interfaces.OpenVSP.export_vsp_vehicle import export_vsp_vehicle 
+from RCAIDE.Framework.External_Interfaces.OpenVSP.run_cfd_mesh import run_vsp_mesh 
+from RCAIDE.Framework.External_Interfaces.GMSH.write_su2_file import write_su2_file
 
 # package imports 
 import numpy as np 
@@ -117,9 +119,9 @@ class SU2_Euler(Aerodynamics):
         
 
     def initialize(self): 
-        write_vsp_mesh(self) # CHECK 
-        write_geo_file(self) # CHECK 
-        mesh_geo_file(self)  # CHECK 
+        export_vsp_vehicle(B737, 'Boeing_737')
+        run_vsp_mesh(B737,"Boeing_737.vsp3", 0.25/20,0.25, sym=False,farfield_scale=25.0,farfield=True,source=False)
+        write_su2_file("Boeing_737.stl", "Boeing_737.su2")
         
         # sample training data
         train_SU2_surrogates(self)

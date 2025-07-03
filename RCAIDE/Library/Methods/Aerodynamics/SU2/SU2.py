@@ -55,6 +55,31 @@ def SU2(conditions,settings,geometry):
     # STEP 13: Pack outputs
     # ------------------ --------------------------------------------------------------------    
     
+    AoA = np.linspace(0,2,3)
+    Mach = 0.85
+
+    from RCAIDE.Framework.External_Interfaces.SU2.generate_su2_euler_cfg import generate_su2_euler_cfg
+    from RCAIDE.Framework.External_Interfaces.SU2.run_SU2_EULER import run_SU2_EULER
+
+    generate_su2_euler_cfg(
+        "boundary_marker.txt",
+        "B737.cfg",
+        "Boeing_737.su2",
+        Mach,
+        0,
+        sideslip_angle=0,
+        freestream_pressure=101325,
+        freestream_temperature=288.15,
+        ref_origin=(22.453, 0.0, 4.037),
+        ref_length=8.32656,
+        ref_area=0,
+        ref_dimensionality="FREESTREAM_VEL_EQ_ONE",
+        sym=False,
+        restart=False
+    )
+
+    results = run_SU2_EULER("B737.cfg", AoA, Mach, num_procs=8)
+    
     results =  Data()
     # force coefficients
     results.S_ref             = 0
