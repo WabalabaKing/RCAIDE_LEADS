@@ -4,9 +4,18 @@ Created on Thu May 22 21:16:55 2025
 
 @author: wz10
 """
-import openvsp as vsp
+try:
+    import vsp as vsp
+except ImportError:
+    try:
+        import openvsp as vsp
+    except ImportError:
+        # This allows RCAIDE to build without OpenVSP
+        pass
+    
 import fileinput
 from RCAIDE.Framework.External_Interfaces.OpenVSP.write_vsp_mesh import set_sources
+
 def run_vsp_mesh(geom,vsp_file, minedge,maxedge, sym=False, 
                  farfield_scale= 2.0, farfield= False,source=False):
     if sym:

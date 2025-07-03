@@ -6,7 +6,10 @@
 
 # package imports 
 import numpy as np 
-from RCAIDE.Framework.Core import Data
+from RCAIDE.Framework.Core import Data ,  Units
+from RCAIDE.Framework.External_Interfaces.SU2.generate_SU2_Euler_cfg import generate_SU2_Euler_cfg 
+import os
+import subprocess 
 
 # ----------------------------------------------------------------------
 #  Vortex Lattice
@@ -14,7 +17,9 @@ from RCAIDE.Framework.Core import Data
 def SU2(conditions,settings,geometry):
   
     # unpack settings---------------------------------------------------------------- 
-    Sref       = geometry.reference_area              
+    S_ref      = geometry.reference_area
+    num_procs  = settings.number_of_processors
+    cfg_file   = settings.SU2_config_filename
 
     # unpack geometry----------------------------------------------------------------
     # define point about which moment coefficient is computed
@@ -43,52 +48,67 @@ def SU2(conditions,settings,geometry):
     else:
         x_m = x_cg
         z_m = z_cg
-        
-    # unpack conditions--------------------------------------------------------------
-    aoa  = conditions.aerodynamics.angles.alpha      # angle of attack  
-    mach = conditions.freestream.mach_number         # mach number
-    ones = np.atleast_2d(np.ones_like(mach)) 
+         
+    aoa      = conditions.aerodynamics.angles.alpha      
+    beta     = conditions.aerodynamics.angles.beta       
+    mach     = conditions.freestream.mach_number         
+    temp     = conditions.freestream.temperature         
+    pressure = conditions.freestream.pressure   
     len_mach = len(mach)
     
-  
-    # ---------------------------------------------------------------------------------------
-    # STEP 13: Pack outputs
-    # ------------------ --------------------------------------------------------------------    
-    
-    AoA = np.linspace(0,2,3)
-    Mach = 0.85
+    """Run SU2 for a range of angles of attack and collect CL, CD, CMz."""
 
-    from RCAIDE.Framework.External_Interfaces.SU2.generate_su2_euler_cfg import generate_su2_euler_cfg
-    from RCAIDE.Framework.External_Interfaces.SU2.run_SU2_EULER import run_SU2_EULER
-
-    generate_su2_euler_cfg(
+    generate_SU2_Euler_cfg(
         "boundary_marker.txt",
-        "B737.cfg",
-        "Boeing_737.su2",
-        Mach,
+        settings.SU2_config_filename,
+        settings.SU2_filename,
+        mach[i],  # need to update 
         0,
-        sideslip_angle=0,
-        freestream_pressure=101325,
-        freestream_temperature=288.15,
-        ref_origin=(22.453, 0.0, 4.037),
-        ref_length=8.32656,
-        ref_area=0,
+        sideslip_angle=beta[0][0],  # need to update 
+        freestream_pressure=pressure[0][0], # need to update 
+        freestream_temperature=temp[0][0],  # need to update 
+        ref_origin=(22.453, 0.0, 4.037),  # need to update 
+        ref_length=8.32656,   # need to update 
+        ref_area=0,    # need to update 
         ref_dimensionality="FREESTREAM_VEL_EQ_ONE",
         sym=False,
         restart=False
-    )
+    ) 
+        
+    SU2_results = []
+    for i in range(len_mach):
+        
+        restart = i > 0  # Restart from the second case onwards
+        modify_SU2_cfg(cfg_file, aoa[i]/Units.degrees, mach[i], restart)
+        
+        # Run SU2 with MPI
+        command = ["mpiexec", "-n", str(num_procs), "SU2_CFD", cfg_file]
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        # Stream the output to terminal in real-time
+        for line in iter(process.stdout.readline, ""):
+            print(line, end="")  # Print line by line without extra newlines
 
-    results = run_SU2_EULER("B737.cfg", AoA, Mach, num_procs=8)
-    
-    results =  Data()
-    # force coefficients
-    results.S_ref             = 0
-    results.b_ref             = 0
-    results.c_ref             = 0
-    results.X_ref             = 0
+        process.stdout.close()
+        process.wait()  # Ensure SU2_CFD finishes before proceeding
+        
+        # Extract aerodynamic coefficients
+        cl, cd, cmz = extract_SU2_forces("forces_breakdown.dat")
+        
+        SU2_results.append((aoa[i], cl, cd, cmz))
+      
+    # ---------------------------------------------------------------------------------------
+    # Pack outputs
+    # ------------------ --------------------------------------------------------------------
+
+    results =  Data()    
+    results.S_ref             = S_ref 
+    results.b_ref             = b_ref
+    results.c_ref             = c_bar  
+    results.X_ref             = x_m
     results.Y_ref             = 0
-    results.Z_ref             = 0
-    results.CLift             = 0
+    results.Z_ref             = z_m 
+    results.CLift             = np.atleast_2d(np.array(SU2_results.cl)).T # need to update 
+    results.CDift             = np.atleast_2d(np.array(SU2_results.cd)).T # need to update 
     results.CX                = 0
     results.CY                = 0
     results.CZ                = 0
@@ -107,5 +127,42 @@ def SU2(conditions,settings,geometry):
     results.V_z               = 0
     
     return 
+     
+
+def modify_SU2_cfg(cfg_file, aoa, mach, restart):
+    """Modify the SU2 configuration file for a given angle of attack and restart setting."""
+    with open(cfg_file, 'r') as file:
+        lines = file.readlines()
     
- 
+    with open(cfg_file, 'w') as file:
+        for line in lines:
+            if line.startswith('AOA='):
+                file.write(f'AOA=  {aoa}\n')
+            elif line.startswith('MACH_NUMBER='):
+                file.write(f'MACH_NUMBER= {mach}\n')
+            elif line.startswith('RESTART_SOL'):
+                file.write(f'RESTART_SOL= {"YES" if restart else "NO"}\n')
+            else:
+                file.write(line)
+
+def extract_SU2_forces(filename):
+    """Extract CL, CD, and CMz from forces_breakdown.dat using string splitting."""
+    cl, cd, cmz = None, None, None
+    
+    if not os.path.exists(filename):
+        print(f"Warning: {filename} not found!")
+        return cl, cd, cmz
+
+    with open(filename, 'r') as file:
+        for line in file:
+            if line.startswith("Total CL:"):
+                parts = line.split("|")
+                cl = float(parts[0].split(":")[-1].strip())
+            elif line.startswith("Total CD"):
+                parts = line.split("|")
+                cd = float(parts[0].split(":")[-1].strip())
+            elif line.startswith("Total CMz:"):
+                parts = line.split("|")
+                cmz = float(parts[0].split(":")[-1].strip())
+
+    return cl, cd, cmz 

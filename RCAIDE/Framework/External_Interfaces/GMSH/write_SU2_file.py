@@ -1,8 +1,9 @@
-import numpy as np
-import gmsh
-import os
-## @ingroup Input_Output-GMSH
-def write_su2_file(stl_path, su2_output_path):
+try:
+    import gmsh as gmsh
+except ImportError: 
+        pass
+    
+def write_SU2_file(stl_path, su2_output_path):
     """This reads an .stl file output from OpenVSP and writes a .su2 volume mesh 
     and their respective Boundary Marker. 
 

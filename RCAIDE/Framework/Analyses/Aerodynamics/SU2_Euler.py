@@ -7,17 +7,15 @@
 # ----------------------------------------------------------------------------------------------------------------------
 
 # RCAIDE imports   
-from RCAIDE.Framework.Core                             import Data, Units
-from RCAIDE.Framework.Analyses                         import Process 
-from RCAIDE.Library.Methods.Aerodynamics               import Common
-from .Aerodynamics                                     import Aerodynamics 
-from RCAIDE.Framework.Analyses.Common.Process_Geometry import Process_Geometry 
-from RCAIDE.Library.Methods.Aerodynamics.SU2           import *
-
-
+from RCAIDE.Framework.Core                                           import Data, Units
+from RCAIDE.Framework.Analyses                                       import Process 
+from RCAIDE.Library.Methods.Aerodynamics                             import Common
+from .Aerodynamics                                                   import Aerodynamics 
+from RCAIDE.Framework.Analyses.Common.Process_Geometry               import Process_Geometry  
+from RCAIDE.Library.Methods.Aerodynamics.SU2                         import *   
 from RCAIDE.Framework.External_Interfaces.OpenVSP.export_vsp_vehicle import export_vsp_vehicle 
-from RCAIDE.Framework.External_Interfaces.OpenVSP.run_cfd_mesh import run_vsp_mesh 
-from RCAIDE.Framework.External_Interfaces.GMSH.write_su2_file import write_su2_file
+from RCAIDE.Framework.External_Interfaces.OpenVSP.run_cfd_mesh       import run_vsp_mesh 
+from RCAIDE.Framework.External_Interfaces.GMSH.write_SU2_file        import write_SU2_file
 
 # package imports 
 import numpy as np 
@@ -62,13 +60,17 @@ class SU2_Euler(Aerodynamics):
         Properties Used:
         N/A
         """          
-        self.tag                                                    = 'Vortex_Lattice_Method'  
+        self.tag                                                    = 'Vortex_Lattice_Method'
         self.vehicle                                                = Data()  
         self.process                                                = Process()
         self.process.initialize                                     = Process()
-        
-        
+
+        self.settings.vsp_filename                                  = None
+        self.settings.stl_filename                                  = None
+        self.settings.SU2_filename                                  = None
+        self.settings.SU2_config_filename                           = None
         self.settings.half_mesh_flag                                = False
+        self.settings.number_of_processors                          = 8
         self.settings.vsp_mesh_growth_ratio                         = False
         self.settings.vsp_mesh_growth_limiting_flag                 = False
     
@@ -118,10 +120,21 @@ class SU2_Euler(Aerodynamics):
         self.process.compute                                        = compute
         
 
-    def initialize(self): 
-        export_vsp_vehicle(B737, 'Boeing_737')
-        run_vsp_mesh(B737,"Boeing_737.vsp3", 0.25/20,0.25, sym=False,farfield_scale=25.0,farfield=True,source=False)
-        write_su2_file("Boeing_737.stl", "Boeing_737.su2")
+    def initialize(self):
+        vehicle = self.vehicle
+        export_vsp_vehicle(vehicle, vehicle.tag)
+        
+        vsp_filename        =  vehicle.tag +  '.vsp3'
+        stl_filename        =  vehicle.tag +  '.stl'  
+        SU2_filename        =  vehicle.tag +  '.su2'  
+        SU2_config_filename =  vehicle.tag +  '.cfg'       
+        run_vsp_mesh(vehicle,vsp_filename, 0.25/20,0.25, sym=False,farfield_scale=25.0,farfield=True,source=False)
+        write_SU2_file(stl_filename, SU2_filename)
+        
+        self.settings.vsp_filename        = vsp_filename
+        self.settings.stl_filename        = stl_filename
+        self.settings.SU2_filename        = SU2_filename
+        self.settings.SU2_config_filename = SU2_config_filename
         
         # sample training data
         train_SU2_surrogates(self)
