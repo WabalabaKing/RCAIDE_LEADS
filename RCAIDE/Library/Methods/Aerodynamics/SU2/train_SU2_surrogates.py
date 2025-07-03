@@ -26,8 +26,7 @@ def train_SU2_surrogates(aerodynamics):
     AoA            = aerodynamics.training.angle_of_attack  
     training       = aerodynamics.training        
     training.Mach  = Mach 
-    
-    
+     
     len_Mach       = len(Mach)        
     len_AoA        = len(AoA)   
     

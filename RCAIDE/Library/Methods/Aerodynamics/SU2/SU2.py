@@ -65,8 +65,8 @@ def SU2(conditions,settings,geometry):
         mach[i],  # need to update 
         0,
         sideslip_angle=beta[0][0],  # need to update 
-        freestream_pressure=pressure[0][0], # need to update 
-        freestream_temperature=temp[0][0],  # need to update 
+        freestream_pressure=101325,
+        freestream_temperature=288.15, 
         ref_origin=(22.453, 0.0, 4.037),  # need to update 
         ref_length=8.32656,   # need to update 
         ref_area=0,    # need to update 
