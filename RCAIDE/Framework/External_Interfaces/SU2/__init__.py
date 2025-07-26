@@ -9,4 +9,4 @@
 # ----------------------------------------------------------------------------------------------------------------------
 
 from .generate_SU2_Euler_cfg import generate_SU2_Euler_cfg
-from .run_SU2_Euler          import run_SU2_Euler
+#from .run_SU2_Euler          import run_SU2_Euler

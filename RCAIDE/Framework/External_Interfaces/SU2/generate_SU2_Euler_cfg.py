@@ -8,7 +8,7 @@ Created on Mon Jun 30 14:57:01 2025
 import os
 import shutil
 
-def generate_su2_euler_cfg(
+def generate_SU2_Euler_cfg(
     boundary_marker_path,
     output_cfg_path,
     mesh_filename,

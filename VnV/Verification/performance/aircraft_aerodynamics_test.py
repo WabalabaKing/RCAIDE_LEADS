@@ -17,7 +17,10 @@ import os
 import  sys
 
 # local imports 
-sys.path.append(os.path.join( os.path.split(os.path.split(sys.path[0])[0])[0], 'Vehicles'))
+#Vehicle path
+VPath="C:\\Users\\wz10\\Documents\\GitHub\\RCAIDE_LEADS\\VnV\\Vehicles"
+#sys.path.append(os.path.join( os.path.split(os.path.split(sys.path[0])[0])[0], 'Vehicles'))
+sys.path.append(VPath)
 from Boeing_737    import vehicle_setup as vehicle_setup 
 # ----------------------------------------------------------------------
 #   Main
