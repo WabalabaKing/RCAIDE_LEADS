@@ -62,11 +62,11 @@ def SU2(conditions,settings,geometry):
         "boundary_marker.txt",
         settings.SU2_config_filename,
         settings.SU2_filename,
-        mach[0],  # need to update 
+        mach[0][0],  # need to update 
         0,
         sideslip_angle=beta[0][0],  # need to update 
-        freestream_pressure=pressure,
-        freestream_temperature=temp, 
+        freestream_pressure=pressure[0][0],
+        freestream_temperature=temp[0][0], 
         ref_origin=(x_mac, 0.0, z_mac),  # need to update 
         ref_length=c_bar,   # need to update 
         ref_area=S_ref,    # need to update 
@@ -76,10 +76,10 @@ def SU2(conditions,settings,geometry):
     ) 
         
     SU2_results = []
-    for i in range(len_mach):
-        for j in range(len(aoa)):
+    for i in range(len_mach[0]):
+        for j in range(len(aoa[0])):
             restart = (j+i) > 0  # Restart from the second case onwards
-            modify_SU2_cfg(cfg_file, aoa[j]/Units.degrees, mach[i], restart)
+            modify_SU2_cfg(cfg_file, aoa[0][j]/Units.degrees, mach[0][i], restart)
         
             # Run SU2 with MPI
             command = ["mpiexec", "-n", str(num_procs), "SU2_CFD", cfg_file]
@@ -94,7 +94,7 @@ def SU2(conditions,settings,geometry):
             # Extract aerodynamic coefficients
             cl, cd, cmz = extract_SU2_forces("forces_breakdown.dat")
         
-        SU2_results.append((mach[i],aoa[j], cl, cd, cmz))
+        SU2_results.append((mach[0][i],aoa[0][j], cl, cd, cmz))
       
     # ---------------------------------------------------------------------------------------
     # Pack outputs

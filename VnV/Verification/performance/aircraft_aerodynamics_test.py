@@ -26,10 +26,10 @@ from Boeing_737    import vehicle_setup as vehicle_setup
 #   Main
 # ---------------------------------------------------------------------- 
 def main():
-    VLM_results = VLM_test()
-    #SU2_test()
+    #VLM_results = VLM_test()
+    SU2_results = SU2_test()
     
-    return VLM_results
+    return SU2_results
     
 def VLM_test():
     vehicle                           = vehicle_setup()  
@@ -52,7 +52,7 @@ def VLM_test():
 def SU2_test():
     vehicle                           = vehicle_setup()  
     Mach_number_range                 = np.atleast_2d(np.linspace(0.3, 0.9, 5)).T
-    angle_of_attack_range             = np.atleast_2d(np.linspace(-5, 5, 11)).T*Units.degrees 
+    angle_of_attack_range             = np.atleast_2d(np.linspace(-4, 4, 5)).T*Units.degrees 
     control_surface_deflection_range  = np.atleast_2d(np.linspace(0,30,7)).T*Units.degrees
     
     aerodynamics_analysis_routine     = RCAIDE.Framework.Analyses.Aerodynamics.SU2_Euler()
@@ -61,7 +61,8 @@ def SU2_test():
     results                           = aircraft_aerodynamic_analysis(aerodynamics_analysis = aerodynamics_analysis_routine,
                                                                       angle_of_attack_range = angle_of_attack_range,
                                                                       Mach_number_range = Mach_number_range,
-                                                                      control_surface_deflection_range= control_surface_deflection_range)
+                                                                      control_surface_deflection_range= control_surface_deflection_range,
+                                                                      altitude = 1)
   
     plot_aircraft_aerodynamics(results) 
   
