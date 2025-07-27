@@ -57,19 +57,19 @@ def SU2(conditions,settings,geometry):
     len_mach = len(mach)
     
     """Run SU2 for a range of angles of attack and collect CL, CD, CMz."""
-
+    
     generate_SU2_Euler_cfg(
         "boundary_marker.txt",
         settings.SU2_config_filename,
         settings.SU2_filename,
-        mach[i],  # need to update 
+        mach[0],  # need to update 
         0,
         sideslip_angle=beta[0][0],  # need to update 
-        freestream_pressure=101325,
-        freestream_temperature=288.15, 
-        ref_origin=(22.453, 0.0, 4.037),  # need to update 
-        ref_length=8.32656,   # need to update 
-        ref_area=0,    # need to update 
+        freestream_pressure=pressure,
+        freestream_temperature=temp, 
+        ref_origin=(x_mac, 0.0, z_mac),  # need to update 
+        ref_length=c_bar,   # need to update 
+        ref_area=S_ref,    # need to update 
         ref_dimensionality="FREESTREAM_VEL_EQ_ONE",
         sym=False,
         restart=False
@@ -77,24 +77,24 @@ def SU2(conditions,settings,geometry):
         
     SU2_results = []
     for i in range(len_mach):
+        for j in range(len(aoa)):
+            restart = (j+i) > 0  # Restart from the second case onwards
+            modify_SU2_cfg(cfg_file, aoa[j]/Units.degrees, mach[i], restart)
         
-        restart = i > 0  # Restart from the second case onwards
-        modify_SU2_cfg(cfg_file, aoa[i]/Units.degrees, mach[i], restart)
-        
-        # Run SU2 with MPI
-        command = ["mpiexec", "-n", str(num_procs), "SU2_CFD", cfg_file]
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        # Stream the output to terminal in real-time
-        for line in iter(process.stdout.readline, ""):
-            print(line, end="")  # Print line by line without extra newlines
+            # Run SU2 with MPI
+            command = ["mpiexec", "-n", str(num_procs), "SU2_CFD", cfg_file]
+            process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            # Stream the output to terminal in real-time
+            for line in iter(process.stdout.readline, ""):
+                print(line, end="")  # Print line by line without extra newlines
 
-        process.stdout.close()
-        process.wait()  # Ensure SU2_CFD finishes before proceeding
+            process.stdout.close()
+            process.wait()  # Ensure SU2_CFD finishes before proceeding
         
-        # Extract aerodynamic coefficients
-        cl, cd, cmz = extract_SU2_forces("forces_breakdown.dat")
+            # Extract aerodynamic coefficients
+            cl, cd, cmz = extract_SU2_forces("forces_breakdown.dat")
         
-        SU2_results.append((aoa[i], cl, cd, cmz))
+        SU2_results.append((mach[i],aoa[j], cl, cd, cmz))
       
     # ---------------------------------------------------------------------------------------
     # Pack outputs
@@ -126,7 +126,7 @@ def SU2(conditions,settings,geometry):
     results.V_x               = 0
     results.V_z               = 0
     
-    return 
+    return results
      
 
 def modify_SU2_cfg(cfg_file, aoa, mach, restart):
