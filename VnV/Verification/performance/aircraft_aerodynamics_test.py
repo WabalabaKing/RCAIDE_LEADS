@@ -51,17 +51,20 @@ def VLM_test():
 
 def SU2_test():
     vehicle                           = vehicle_setup()  
-    Mach_number_range                 = np.atleast_2d(np.linspace(0.3, 0.9, 5)).T
+    #Mach_number_range                 = np.atleast_2d(np.linspace(0.3, 0.9, 1)).T
+    
     angle_of_attack_range             = np.atleast_2d(np.linspace(-4, 4, 5)).T*Units.degrees 
-    control_surface_deflection_range  = np.atleast_2d(np.linspace(0,30,7)).T*Units.degrees
+    
+    Mach_number_range =np.ones_like(angle_of_attack_range)*0.8
+    #control_surface_deflection_range  = np.atleast_2d(np.linspace(0,30,7)).T*Units.degrees
     
     aerodynamics_analysis_routine     = RCAIDE.Framework.Analyses.Aerodynamics.SU2_Euler()
     aerodynamics_analysis_routine.vehicle = vehicle
     
     results                           = aircraft_aerodynamic_analysis(aerodynamics_analysis = aerodynamics_analysis_routine,
-                                                                      angle_of_attack_range = angle_of_attack_range,
-                                                                      Mach_number_range = Mach_number_range,
-                                                                      control_surface_deflection_range= control_surface_deflection_range,
+                                                                      angle_of_attacks = angle_of_attack_range,
+                                                                      mach_numbers = Mach_number_range,
+                                                                      #control_surface_deflection_range= control_surface_deflection_range,
                                                                       altitude = 1)
   
     plot_aircraft_aerodynamics(results) 

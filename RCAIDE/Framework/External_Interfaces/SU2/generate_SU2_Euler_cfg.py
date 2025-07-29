@@ -113,7 +113,7 @@ def generate_SU2_Euler_cfg(
 
     # ---------- CONVERGENCE ----------
     cfg_lines.append("CONV_FIELD= RMS_DENSITY\n")
-    cfg_lines.append("CONV_RESIDUAL_MINVAL= -12\n")
+    cfg_lines.append("CONV_RESIDUAL_MINVAL= -6\n")
     cfg_lines.append("CONV_STARTITER= 25\n")
     cfg_lines.append("CONV_CAUCHY_ELEMS= 100\n")
     cfg_lines.append("CONV_CAUCHY_EPS= 1E-10\n")

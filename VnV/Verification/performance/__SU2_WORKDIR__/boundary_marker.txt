@@ -1,7 +1,0 @@
-Assigned Physical Surface 'main_wing' to tag [1, 2]
-Assigned Physical Surface 'horizontal_stabilizer' to tag [3, 4]
-Assigned Physical Surface 'vertical_stabilizer' to tag [5]
-Assigned Physical Surface 'nacelle_1' to tag [6]
-Assigned Physical Surface 'nacelle_12' to tag [7]
-Assigned Physical Surface 'fuselage' to tag [8]
-Assigned Physical Surface 'FarField' to tag [9]

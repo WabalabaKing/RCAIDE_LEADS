@@ -73,11 +73,19 @@ class SU2_Euler(Aerodynamics):
         self.settings.number_of_processors                          = 8
         self.settings.vsp_mesh_growth_ratio                         = False
         self.settings.vsp_mesh_growth_limiting_flag                 = False
-    
+        self.settings.run_new_SU2_sim                               = True
+        self.settings.CFD_file_name                                 = None
+        self.settings.maxedge                                       = 0.25
+        self.settings.minedge                                       = 0.0125
+        self.settings.farfield_scale                                = 25
+        
+        
         # conditions table, used for surrogate model training
         self.training                                               = Data()
-        self.training.angle_of_attack                               = np.array([-5., -2. , 1E-20 , 2.0, 5.0, 8.0, 12., ]) * Units.deg 
-        self.training.Mach                                          = np.array([0.1  ,0.3,  0.5,  0.65 , 0.85 ])             
+        self.training.angle_of_attack                               = np.array([ -5, 0, 5 ]) * Units.deg 
+        self.training.Mach                                          = np.array([0.3, 0.5, 0.8]) 
+        self.training.temperature                                   = 285
+        self.training.pressure                                      = 101325            
            
         self.reference_values                                       = Data()
         self.reference_values.S_ref                                 = 0
@@ -128,7 +136,7 @@ class SU2_Euler(Aerodynamics):
         stl_filename        =  vehicle.tag +  '.stl'  
         SU2_filename        =  vehicle.tag +  '.su2'  
         SU2_config_filename =  vehicle.tag +  '.cfg'       
-        run_vsp_mesh(vehicle,vsp_filename, 0.25/20,0.25, sym=False,farfield_scale=25.0,farfield=True,source=False)
+        run_vsp_mesh(vehicle,vsp_filename, self.settings.minedge,self.settings.maxedge, sym=False,farfield_scale = self.settings.farfield_scale,farfield=True,source=False)
         write_SU2_file(stl_filename, SU2_filename)
         
         self.settings.vsp_filename        = vsp_filename
@@ -136,11 +144,11 @@ class SU2_Euler(Aerodynamics):
         self.settings.SU2_filename        = SU2_filename
         self.settings.SU2_config_filename = SU2_config_filename
         
-        # sample training data
+            # sample training data
         train_SU2_surrogates(self)
-
-        # build surrogate
+            # build surrogate
         build_SU2_surrogates(self)
+
             
         return 
     

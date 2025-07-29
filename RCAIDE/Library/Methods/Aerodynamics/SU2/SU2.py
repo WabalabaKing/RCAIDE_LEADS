@@ -10,6 +10,7 @@ from RCAIDE.Framework.Core import Data ,  Units
 from RCAIDE.Framework.External_Interfaces.SU2.generate_SU2_Euler_cfg import generate_SU2_Euler_cfg 
 import os
 import subprocess 
+import pickle
 
 # ----------------------------------------------------------------------
 #  Vortex Lattice
@@ -65,22 +66,23 @@ def SU2(conditions,settings,geometry):
         mach[0][0],  # need to update 
         0,
         sideslip_angle=beta[0][0],  # need to update 
-        #freestream_pressure=pressure[0][0],
-        #freestream_temperature=temp[0][0], 
+        freestream_pressure=pressure[0][0],
+        freestream_temperature=temp[0][0], 
         ref_origin=(x_mac, 0.0, z_mac),  # need to update 
         ref_length=c_bar,   # need to update 
         ref_area=S_ref,    # need to update 
         ref_dimensionality="FREESTREAM_VEL_EQ_ONE",
         sym=False,
         restart=False
-    ) 
-        
+    )  
     SU2_results = []
     for i in range(len_mach):
-        for j in range(len(aoa)):
-            restart = (j+i) > 0  # Restart from the second case onwards
-            modify_SU2_cfg(cfg_file, aoa[j][0]/Units.degrees, mach[i][0], restart)
-        
+            if aoa[i][0] ==aoa[0][0]:
+                restart=False
+            else:
+                restart=True
+            #restart = i > 0  # Restart from the second case onwards
+            modify_SU2_cfg(cfg_file, aoa[i][0]/Units.degrees, mach[i][0], restart)
             # Run SU2 with MPI
             command = ["mpiexec", "-n", str(num_procs), "SU2_CFD", cfg_file]
             process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
@@ -92,14 +94,13 @@ def SU2(conditions,settings,geometry):
             process.wait()  # Ensure SU2_CFD finishes before proceeding
         
             # Extract aerodynamic coefficients
-            cl, cd, cmz = extract_SU2_forces("forces_breakdown.dat")
+            cl, cd, cmz, clw, cdw  = extract_SU2_forces("forces_breakdown.dat","main_wing")
         
-        SU2_results.append((mach[i],aoa[j], cl, cd, cmz))
-      
+            SU2_results.append([mach[i][0],aoa[i][0], cl, cd, cmz,clw,cdw])
     # ---------------------------------------------------------------------------------------
     # Pack outputs
     # ------------------ --------------------------------------------------------------------
-
+    
     results =  Data()    
     results.S_ref             = S_ref 
     results.b_ref             = b_ref
@@ -107,13 +108,15 @@ def SU2(conditions,settings,geometry):
     results.X_ref             = x_m
     results.Y_ref             = 0
     results.Z_ref             = z_m 
-    results.CLift             = np.atleast_2d(np.array(SU2_results.cl)).T # need to update 
-    results.CDift             = np.atleast_2d(np.array(SU2_results.cd)).T # need to update 
+    results.CLift             = [x[2] for x in SU2_results]
+    results.CDift             = [x[3] for x in SU2_results]
+    results.CLift_wings       = [x[5] for x in SU2_results]
+    results.CDrag_induced_wings = [x[6] for x in SU2_results]
     results.CX                = 0
     results.CY                = 0
     results.CZ                = 0
     results.CL                = 0
-    results.CM                = 0
+    results.CM                = [x[4] for x in SU2_results]
     results.CN                = 0
     results.chord_sections    = 0
     results.spanwise_stations = 0
@@ -145,24 +148,33 @@ def modify_SU2_cfg(cfg_file, aoa, mach, restart):
             else:
                 file.write(line)
 
-def extract_SU2_forces(filename):
+def extract_SU2_forces(filename,tag):
     """Extract CL, CD, and CMz from forces_breakdown.dat using string splitting."""
     cl, cd, cmz = None, None, None
-    
+    clw,cdw = None,None
     if not os.path.exists(filename):
         print(f"Warning: {filename} not found!")
         return cl, cd, cmz
-
+    tagflag=False
     with open(filename, 'r') as file:
         for line in file:
             if line.startswith("Total CL:"):
                 parts = line.split("|")
                 cl = float(parts[0].split(":")[-1].strip())
-            elif line.startswith("Total CD"):
+            elif line.startswith("Total CD:"):
                 parts = line.split("|")
                 cd = float(parts[0].split(":")[-1].strip())
             elif line.startswith("Total CMz:"):
                 parts = line.split("|")
                 cmz = float(parts[0].split(":")[-1].strip())
-
-    return cl, cd, cmz 
+            elif line.startswith(f"Surface name: {tag}"):
+                tagflag=True
+            elif tagflag and line.startswith("Total CL "):
+                parts = line.split("|")
+                clw = float(parts[0].split(":")[-1].strip())
+            elif tagflag and line.startswith("Total CD"):
+                parts = line.split("|")
+                cdw = float(parts[0].split(":")[-1].strip())
+            elif line.startswith("Surface name") and not line.startswith(f"Surface name: {tag}"):
+                tagflag=False
+    return cl, cd, cmz, clw, cdw 
