@@ -78,6 +78,7 @@ class SU2_Euler(Aerodynamics):
         self.settings.maxedge                                       = 0.25
         self.settings.minedge                                       = 0.0125
         self.settings.farfield_scale                                = 25
+        self.settings.trim_aircraft                                 = False
         
         
         # conditions table, used for surrogate model training

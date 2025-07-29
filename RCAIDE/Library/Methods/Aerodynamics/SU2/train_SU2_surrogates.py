@@ -52,7 +52,7 @@ def train_SU2_surrogates(aerodynamics):
         file_path = 'SU2_surrogate.pkl'
         with open(file_path, 'wb') as file:
             pickle.dump(SU2_results, file)
-        shutil.move(file_path,"../")
+        shutil.move(file_path, f"../{file_path}")
         # write and record the Su2 surrogate data
         print("Writing Surrogate Data into SU2_surrogate.pkl")
     else:
