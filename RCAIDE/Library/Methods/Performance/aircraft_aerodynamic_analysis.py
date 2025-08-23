@@ -25,8 +25,7 @@ def aircraft_aerodynamic_analysis(aerodynamics_analysis            = None,
                                   non_dimensional_reynolds_numbers = None,
                                   temperatures                     = None,
                                   update_fuselage_properties       = True, 
-                                  overwrite_reference              = True, 
-                                  update_wing_properties           = True, 
+                                  overwrite_reference              = True,  
                                   altitude = None ):
     """
     Computes aerodynamic coefficients across ranges of angle of attack and Mach numbers using vortex lattice methods.
@@ -80,25 +79,51 @@ def aircraft_aerodynamic_analysis(aerodynamics_analysis            = None,
     # Preprocess Geometry
     #------------------------------------------------------------------------     
     vehicle =  aerodynamics_analysis.vehicle
-    # update fuselage properties
-    if update_fuselage_properties:
-        for fuselage in vehicle.fuselages: 
-            fuselage_planform(fuselage) 
+    
 
-    # update wing properties 
-    for wing in vehicle.wings:  
+    # update fuselage properties 
+    A_fuselage   = 0  
+    for fuselage in vehicle.fuselages: 
+        fuselage_planform(fuselage) 
+        vehicle.length  = np.maximum(vehicle.length , fuselage.lengths.total)
+        A_fuselage      = np.maximum(A_fuselage,fuselage.areas.front_projected)
+             
+    # update landing gear properties 
+    for landing_gear in  vehicle.landing_gears:
+        if (landing_gear.number_of_gear_types_in_tandem != None) and  (landing_gear.number_of_wheels_in_gear_type != None):
+            landing_gear.wheels = landing_gear.number_of_gear_types_in_tandem * landing_gear.number_of_wheels_in_gear_type
+            if landing_gear.symmetric:
+                landing_gear.wheels *= 2
+        
+    vehicle.maximum_cross_sectional_area  =  A_fuselage
+    
+    # update wing properties
+    Amax_wing =  0
+    for wing in vehicle.wings: 
         #  Blended Wing Body 
         if isinstance(wing, RCAIDE.Library.Components.Wings.Blended_Wing_Body): 
-            if update_wing_properties and overwrite_reference:
-                bwb_wing_planform(wing,overwrite_reference)
+            bwb_wing_planform(wing)
+            if overwrite_reference:
                 vehicle.reference_area = wing.areas.reference 
         # All other wing surfaces 
-        else:
-            if update_wing_properties:
-                wing_planform(wing, overwrite_reference) 
-                if isinstance(wing, RCAIDE.Library.Components.Wings.Main_Wing) and overwrite_reference:
-                    vehicle.reference_area = wing.areas.reference
-    
+        else: 
+            wing_planform(wing) 
+            if isinstance(wing, RCAIDE.Library.Components.Wings.Main_Wing) and overwrite_reference:
+                vehicle.reference_area = wing.areas.reference
+                
+        # reference chord 
+        vehicle.reference_chord  = np.maximum(vehicle.reference_chord , wing.chords.mean_aerodynamic)
+        
+        # reference span 
+        vehicle.reference_span   = np.maximum(vehicle.reference_span  , wing.spans.projected)
+        
+        # total length 
+        vehicle.length = np.maximum(vehicle.length, wing.chords.root)                         
+        
+        # max cross sectional area 
+        A_wing_plus_fuselage   = wing.spans.projected * wing.thickness_to_chord *  wing.chords.root +  A_fuselage
+        vehicle.maximum_cross_sectional_area = np.maximum(vehicle.maximum_cross_sectional_area,A_wing_plus_fuselage) 
+  
     #------------------------------------------------------------------------  
     # Check size of arrays 
     #------------------------------------------------------------------------

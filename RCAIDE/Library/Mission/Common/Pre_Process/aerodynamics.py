@@ -6,7 +6,7 @@
 # ----------------------------------------------------------------------------------------------------------------------
 #  IMPORT
 # ---------------------------------------------------------------------------------------------------------------------- 
-from RCAIDE.Library.Methods.Geometry.Planform  import  wing_planform
+import  RCAIDE  
 
 # ----------------------------------------------------------------------------------------------------------------------
 #  aerodynamics
@@ -28,9 +28,7 @@ def aerodynamics(mission):
                 - process.compute.lift.inviscid_wings : Process
                     Lift computation process
                 - surrogates : Data
-                    Aerodynamic surrogate models
-                - reference_values : Data
-                    Reference aerodynamic parameters
+                    Aerodynamic surrogate models 
 
     Notes
     -----
@@ -66,14 +64,25 @@ def aerodynamics(mission):
     
         
     last_tag = None
-    for tag,segment in mission.segments.items():  
-        if segment.analyses.aerodynamics != None:                 
-            if (last_tag!=  None) and  ('compute' in mission.segments[last_tag].analyses.aerodynamics.process.keys()): 
-                segment.analyses.aerodynamics.process.compute.lift.inviscid_wings = mission.segments[last_tag].analyses.aerodynamics.process.compute.lift.inviscid_wings
-                segment.analyses.aerodynamics.surrogates       = mission.segments[last_tag].analyses.aerodynamics.surrogates 
-                segment.analyses.aerodynamics.reference_values = mission.segments[last_tag].analyses.aerodynamics.reference_values  
-            else:          
-                aero   = segment.analyses.aerodynamics
-                aero.initialize()   
-                last_tag = tag  
+    for tag,segment in mission.segments.items(): 
+        if type(segment) ==  RCAIDE.Framework.Mission.Segments.Vertical_Flight.Climb or  \
+           type(segment) ==  RCAIDE.Framework.Mission.Segments.Vertical_Flight.Hover or \
+           type(segment) ==  RCAIDE.Framework.Mission.Segments.Vertical_Flight.Descent:
+            pass
+        else:        
+            if segment.analyses.aerodynamics != None:
+                if last_tag!=  None:
+                    if segment.analyses.aerodynamics.settings.unique_segment_surrogate:
+                        aero   = segment.analyses.aerodynamics
+                        aero.initialize()   
+                        last_tag = tag
+                    else:
+                        if 'compute' in mission.segments[last_tag].analyses.aerodynamics.process.keys(): 
+                            segment.analyses.aerodynamics.process.compute.lift.inviscid_wings = mission.segments[last_tag].analyses.aerodynamics.process.compute.lift.inviscid_wings
+                            segment.analyses.aerodynamics.surrogates                          = mission.segments[last_tag].analyses.aerodynamics.surrogates  
+                            segment.analyses.aerodynamics.settings.vortex_distribution        = mission.segments[last_tag].analyses.aerodynamics.settings.vortex_distribution 
+                else: 
+                    aero   = segment.analyses.aerodynamics
+                    aero.initialize()   
+                    last_tag = tag  
     return 
