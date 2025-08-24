@@ -36,30 +36,31 @@ def evaluate_surrogate(state,settings,vehicle):
     """          
     conditions    = state.conditions
     aerodynamics  = state.analyses.aerodynamics
-    trim          = aerodynamics.settings.trim_aircraft
+    #trim          = aerodynamics.settings.trim_aircraft
     sub_sur       = aerodynamics.surrogates.subsonic 
     ref_vals      = aerodynamics.reference_values
     AoA           = np.atleast_2d(conditions.aerodynamics.angles.alpha)    
     Mach          = np.atleast_2d(conditions.freestream.mach_number)  
      
-    # loop through wings to determine what control surfaces are present  
-    for wing in vehicle.wings: 
-        for control_surface in wing.control_surfaces:  
-            if type(control_surface) == RCAIDE.Library.Components.Wings.Control_Surfaces.Aileron:
-                if trim !=  True:  
-                    conditions.control_surfaces.aileron.deflection[:, 0] = control_surface.deflection
-            if type(control_surface) == RCAIDE.Library.Components.Wings.Control_Surfaces.Elevator: 
-                if trim !=  True:   
-                    conditions.control_surfaces.elevator.deflection[:, 0] = control_surface.deflection
-            if type(control_surface) == RCAIDE.Library.Components.Wings.Control_Surfaces.Rudder: 
-                if trim !=  True:  
-                    conditions.control_surfaces.rudder.deflection[:, 0] = control_surface.deflection
-            if type(control_surface) == RCAIDE.Library.Components.Wings.Control_Surfaces.Slat: 
-                conditions.control_surfaces.slat.deflection[:, 0] = control_surface.deflection
-            if type(control_surface) == RCAIDE.Library.Components.Wings.Control_Surfaces.Flap:   
-                conditions.control_surfaces.flap.deflection[:, 0] = control_surface.deflection
-            if type(control_surface) == RCAIDE.Library.Components.Wings.Control_Surfaces.Spoiler:   
-                conditions.control_surfaces.spoiler.deflection[:, 0] = control_surface.deflection  
+    # loop through wings to determine what control surfaces are present 
+    ###CANNOT TRIM AIRCRAFT FOR NOW
+    # for wing in vehicle.wings: 
+    #     for control_surface in wing.control_surfaces:  
+    #         if type(control_surface) == RCAIDE.Library.Components.Wings.Control_Surfaces.Aileron:
+    #             if trim !=  True:  
+    #                 conditions.control_surfaces.aileron.deflection[:, 0] = control_surface.deflection
+    #         if type(control_surface) == RCAIDE.Library.Components.Wings.Control_Surfaces.Elevator: 
+    #             if trim !=  True:   
+    #                 conditions.control_surfaces.elevator.deflection[:, 0] = control_surface.deflection
+    #         if type(control_surface) == RCAIDE.Library.Components.Wings.Control_Surfaces.Rudder: 
+    #             if trim !=  True:  
+    #                 conditions.control_surfaces.rudder.deflection[:, 0] = control_surface.deflection
+    #         if type(control_surface) == RCAIDE.Library.Components.Wings.Control_Surfaces.Slat: 
+    #             conditions.control_surfaces.slat.deflection[:, 0] = control_surface.deflection
+    #         if type(control_surface) == RCAIDE.Library.Components.Wings.Control_Surfaces.Flap:   
+    #             conditions.control_surfaces.flap.deflection[:, 0] = control_surface.deflection
+    #         if type(control_surface) == RCAIDE.Library.Components.Wings.Control_Surfaces.Spoiler:   
+    #             conditions.control_surfaces.spoiler.deflection[:, 0] = control_surface.deflection  
 
     # -----------------------------------------------------------------------------------------------------------------------
     # Query surrogates  

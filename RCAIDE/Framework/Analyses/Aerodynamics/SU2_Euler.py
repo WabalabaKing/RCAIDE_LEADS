@@ -14,7 +14,7 @@ from .Aerodynamics                                                   import Aero
 from RCAIDE.Framework.Analyses.Common.Process_Geometry               import Process_Geometry  
 from RCAIDE.Library.Methods.Aerodynamics.SU2                         import *   
 from RCAIDE.Framework.External_Interfaces.OpenVSP.export_vsp_vehicle import export_vsp_vehicle 
-from RCAIDE.Framework.External_Interfaces.OpenVSP.run_cfd_mesh       import run_vsp_mesh 
+from RCAIDE.Framework.External_Interfaces.OpenVSP.run_vsp_mesh       import run_vsp_mesh 
 from RCAIDE.Framework.External_Interfaces.GMSH.write_SU2_file        import write_SU2_file
 
 # package imports 
@@ -60,7 +60,7 @@ class SU2_Euler(Aerodynamics):
         Properties Used:
         N/A
         """          
-        self.tag                                                    = 'Vortex_Lattice_Method'
+        self.tag                                                    = 'SU2_Euler'
         self.vehicle                                                = Data()  
         self.process                                                = Process()
         self.process.initialize                                     = Process()
@@ -71,12 +71,12 @@ class SU2_Euler(Aerodynamics):
         self.settings.SU2_config_filename                           = None
         self.settings.half_mesh_flag                                = False
         self.settings.number_of_processors                          = 8
-        self.settings.vsp_mesh_growth_ratio                         = False
+        self.settings.vsp_mesh_growth_ratio                         = 1.2
         self.settings.vsp_mesh_growth_limiting_flag                 = False
-        self.settings.run_new_SU2_sim                               = True
+        self.settings.run_new_SU2_sim                               = False
         self.settings.CFD_file_name                                 = None
-        self.settings.maxedge                                       = 0.25
-        self.settings.minedge                                       = 0.0125
+        self.settings.maxedge                                       = 0.5
+        self.settings.minedge                                       = 0.025
         self.settings.farfield_scale                                = 25
         self.settings.trim_aircraft                                 = False
         
@@ -84,6 +84,7 @@ class SU2_Euler(Aerodynamics):
         # conditions table, used for surrogate model training
         self.training                                               = Data()
         self.training.angle_of_attack                               = np.array([ -5, 0, 5 ]) * Units.deg 
+        #self.training.angle_of_attack                               = np.array([ -5, -3, -1, 0, 1, 3, 5, 7, 9, 10 ]) * Units.deg 
         self.training.Mach                                          = np.array([0.3, 0.5, 0.8]) 
         self.training.temperature                                   = 285
         self.training.pressure                                      = 101325            
